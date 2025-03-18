@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[47,)"
+loaderVersion = "[{{ Forge Version Short }},)"
 #issueTrackerURL = ""
 license = "Insert License Here"
 
@@ -16,7 +16,7 @@ This is an example description! Tell everyone what your mod is about!
 [[dependencies.{{ Mod ID }}]]
 modId = "forge"
 mandatory = true
-versionRange = "[47,)"
+versionRange = "[{{ Forge Version Short }},)"
 ordering = "NONE"
 side = "BOTH"
 

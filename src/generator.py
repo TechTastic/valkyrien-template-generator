@@ -148,6 +148,7 @@ class Generator:
         content = content.replace(r"{{ Fabric Loader Version }}", self.get_fabric_loader_version())
         content = content.replace(r"{{ Fabric API Version }}", self.get_fabric_api_version())
         content = content.replace(r"{{ Forge Version }}", self.get_forge_version())
+        content = content.replace(r"{{ Forge Version Short }}", self.get_forge_version().split("-")[1].split(".")[0])
         
         with open(path, 'w') as f:
             f.write(content)
@@ -179,11 +180,10 @@ class Generator:
             configs.store(f)
             f.close()
     
-    
     def get_arch_api_version(self):
         match self.mc_version:
             case MinecraftVersion.v1182:
-                return ""
+                return "4.12.94"
             case MinecraftVersion.v1201:
                 return "9.2.14"
             case MinecraftVersion.v1211:
@@ -192,7 +192,7 @@ class Generator:
     def get_fabric_loader_version(self):
         match self.mc_version:
             case MinecraftVersion.v1182:
-                return ""
+                return "0.16.10"
             case MinecraftVersion.v1201:
                 return "0.16.10"
             case MinecraftVersion.v1211:
@@ -201,7 +201,7 @@ class Generator:
     def get_fabric_api_version(self):
         match self.mc_version:
             case MinecraftVersion.v1182:
-                return ""
+                return "0.77.0+1.18.2"
             case MinecraftVersion.v1201:
                 return "0.92.4+1.20.1"
             case MinecraftVersion.v1211:
@@ -210,7 +210,7 @@ class Generator:
     def get_forge_version(self):
         match self.mc_version:
             case MinecraftVersion.v1182:
-                return ""
+                return "1.18.2-40.2.26"
             case MinecraftVersion.v1201:
                 return "1.20.1-47.3.12"
             case MinecraftVersion.v1211:
