@@ -42,7 +42,9 @@ class Generator:
         print(f"Language: {self.language}")
         print("===============================================")
 
-        self.clear_old_cache()
+        self._clear_old_cache()
+        path = self._does_template_exist()
+        Generator.copy_over_template(path, "output")
         
     def _validate_mod_id(self):
         print("Validating Mod ID...")
@@ -61,7 +63,31 @@ class Generator:
             os._exit(1)
         print("Platform and Minecraft version are valid!")
 
-    def clear_old_cache(self):
+    def _clear_old_cache(self):
         print("Deleting old cache...")
         if os.path.exists(self.output_loc):
             shutil.rmtree(self.output_loc)
+    
+    def _does_template_exist(self):
+        print("Checking for correct template...")
+        path = f"templates/{self.language.value}/{self.platform.value}"
+        if self.platform == Platform.ARCHITECTURY:
+            if self.mc_version == MinecraftVersion.v1211:
+                path += "/neoforge"
+            else:
+                path += "/forge"
+        if not os.path.exists(path):
+            print(f"No templates exist at '{path}'")
+            os._exit(1)
+        return path
+    
+    def copy_over_template(source, destination):
+        files = os.listdir(source)
+        print(f"Creating new {destination} directory...")
+        os.mkdir(destination)
+        for file in files:
+            if os.path.isfile(f"{source}/{file}"):
+                print(f"Copying over {source}/{file}")
+                shutil.copy(f"{source}/{file}", f"{destination}/{file}")
+            else:
+                Generator.copy_over_template(os.path.join(source, file), os.path.join(destination, file))
