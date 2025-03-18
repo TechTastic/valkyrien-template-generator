@@ -148,7 +148,9 @@ class Generator:
         content = content.replace(r"{{ Fabric Loader Version }}", self.get_fabric_loader_version())
         content = content.replace(r"{{ Fabric API Version }}", self.get_fabric_api_version())
         content = content.replace(r"{{ Forge Version }}", self.get_forge_version())
-        content = content.replace(r"{{ Forge Version Short }}", self.get_forge_version().split("-")[1].split(".")[0])
+        if self.mc_version != MinecraftVersion.v1211:
+            content = content.replace(r"{{ Forge Version Short }}", self.get_forge_version().split("-")[1].split(".")[0])
+        content = content.replace(r"{{ NeoForge Version Short }}", "4")
         
         with open(path, 'w') as f:
             f.write(content)
@@ -173,6 +175,8 @@ class Generator:
                 configs["fabric_api_version"] = self.get_fabric_api_version()
             if configs.get("forge_version"):
                 configs["forge_version"] = self.get_forge_version()
+            if configs.get("neoforge_version"):
+                configs["neoforge_version"] = self.get_forge_version()
             
             f.close()
         
@@ -187,7 +191,7 @@ class Generator:
             case MinecraftVersion.v1201:
                 return "9.2.14"
             case MinecraftVersion.v1211:
-                return ""
+                return "13.0.8"
     
     def get_fabric_loader_version(self):
         match self.mc_version:
@@ -196,7 +200,7 @@ class Generator:
             case MinecraftVersion.v1201:
                 return "0.16.10"
             case MinecraftVersion.v1211:
-                return ""
+                return "0.16.10"
     
     def get_fabric_api_version(self):
         match self.mc_version:
@@ -205,7 +209,7 @@ class Generator:
             case MinecraftVersion.v1201:
                 return "0.92.4+1.20.1"
             case MinecraftVersion.v1211:
-                return ""
+                return "0.115.2+1.21.1"
 
     def get_forge_version(self):
         match self.mc_version:
@@ -214,4 +218,4 @@ class Generator:
             case MinecraftVersion.v1201:
                 return "1.20.1-47.3.12"
             case MinecraftVersion.v1211:
-                return ""
+                return "21.1.84"
