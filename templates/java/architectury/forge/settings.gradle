@@ -7,7 +7,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = {{ Mod ID }}
+rootProject.name = '{{ Mod ID }}'
 
 include 'common'
 include 'fabric'

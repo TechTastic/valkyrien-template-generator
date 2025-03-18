@@ -1,6 +1,7 @@
 from enum import Enum
 import os
 import shutil
+from jproperties import Properties
 
 class MinecraftVersion(Enum):
     v1211 = "1.21.1"
@@ -123,4 +124,94 @@ class Generator:
                 self.change_directory_and_file_names_recursive(path)
     
     def change_content_in_file(self, path):
-        pass
+        print(f"Adding Content to {path}...")
+
+        if path.endswith(".properties"):
+            self.change_content_in_gradle_properties(path)
+            return
+        
+        if path.endswith(".jar"):
+            return
+        
+        content = ""
+        with open(path, 'r') as f:
+            content = f.read()
+            f.close()
+        
+        content = content.replace("com.example", self.package)
+        content = content.replace("ExampleMod", "".join(self.mod_name.split(" ")))
+        content = content.replace("example_mod", self.mod_id)
+        content = content.replace(r"{{ Mod ID }}", self.mod_id)
+        content = content.replace(r"{{ Mod Name }}", self.mod_name)
+        content = content.replace(r"{{ MC Version }}", self.mc_version.value)
+        content = content.replace(r"{{ Arch API Version }}", self.get_arch_api_version())
+        content = content.replace(r"{{ Fabric Loader Version }}", self.get_fabric_loader_version())
+        content = content.replace(r"{{ Fabric API Version }}", self.get_fabric_api_version())
+        content = content.replace(r"{{ Forge Version }}", self.get_forge_version())
+        
+        with open(path, 'w') as f:
+            f.write(content)
+            f.close()
+    
+    def change_content_in_gradle_properties(self, path):
+        configs = Properties()
+        with open(path, 'rb') as f:
+            configs.load(f)
+
+            if configs.get("maven_group"):
+                configs["maven_group"] = self.package
+            if configs.get("archives_name"):
+                configs["archives_name"] = self.mod_id
+            if configs.get("minecraft_version"):
+                configs["minecraft_version"] = self.mc_version.value
+            if configs.get("architectury_api_version"):
+                configs["architectury_api_version"] = self.get_arch_api_version()
+            if configs.get("fabric_loader_version"):
+                configs["fabric_loader_version"] = self.get_fabric_loader_version()
+            if configs.get("fabric_api_version"):
+                configs["fabric_api_version"] = self.get_fabric_api_version()
+            if configs.get("forge_version"):
+                configs["forge_version"] = self.get_forge_version()
+            
+            f.close()
+        
+        with open(path, 'wb') as f:
+            configs.store(f)
+            f.close()
+    
+    
+    def get_arch_api_version(self):
+        match self.mc_version:
+            case MinecraftVersion.v1182:
+                return ""
+            case MinecraftVersion.v1201:
+                return "9.2.14"
+            case MinecraftVersion.v1211:
+                return ""
+    
+    def get_fabric_loader_version(self):
+        match self.mc_version:
+            case MinecraftVersion.v1182:
+                return ""
+            case MinecraftVersion.v1201:
+                return "0.16.10"
+            case MinecraftVersion.v1211:
+                return ""
+    
+    def get_fabric_api_version(self):
+        match self.mc_version:
+            case MinecraftVersion.v1182:
+                return ""
+            case MinecraftVersion.v1201:
+                return "0.92.4+1.20.1"
+            case MinecraftVersion.v1211:
+                return ""
+
+    def get_forge_version(self):
+        match self.mc_version:
+            case MinecraftVersion.v1182:
+                return ""
+            case MinecraftVersion.v1201:
+                return "1.20.1-47.3.12"
+            case MinecraftVersion.v1211:
+                return ""

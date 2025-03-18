@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "{{ Mod Version }}",
+  "id": "{{ Mod ID }}",
   "version": "${version}",
   "name": "{{ Mod Name }}",
   "description": "This is an example description! Tell everyone what your mod is about!",
