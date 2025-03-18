@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from generator import MinecraftVersion, Platform, Language, Generator
 
@@ -19,6 +20,8 @@ def main():
     package = args.package
     platform = args.platform
     language = args.language
+
+    sys.setrecursionlimit(100000)
 
     gen = Generator(mod_name, mc_version, mod_id, package, platform, language)
 

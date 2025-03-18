@@ -45,6 +45,7 @@ class Generator:
         self._clear_old_cache()
         path = self._does_template_exist()
         Generator.copy_over_template(path, "output")
+        self.change_directory_and_file_names_recursive("output")
         
     def _validate_mod_id(self):
         print("Validating Mod ID...")
@@ -91,3 +92,35 @@ class Generator:
                 shutil.copy(f"{source}/{file}", f"{destination}/{file}")
             else:
                 Generator.copy_over_template(os.path.join(source, file), os.path.join(destination, file))
+    
+    def change_directory_and_file_names_recursive(self, dir_path_content):
+        directories = os.listdir(dir_path_content)
+        for directory in directories:
+            if os.path.isfile(f"{dir_path_content}/{directory}"):
+                if directory.startswith("example_mod") and directory != directory.replace('example_mod', self.mod_id):
+                    print(f"Changing {dir_path_content}/{directory} to {dir_path_content}/{directory.replace('example_mod', self.mod_id)}")
+                    shutil.copy(f"{dir_path_content}/{directory}", f"{dir_path_content}/{directory.replace('example_mod', self.mod_id)}")
+                    os.remove(f"{dir_path_content}/{directory}")
+                elif directory.startswith("ExampleMod") and directory != directory.replace('ExampleMod', ''.join(self.mod_name.split(' '))):
+                    print(f"Changing {dir_path_content}/{directory} to {dir_path_content}/{directory.replace('ExampleMod', ''.join(self.mod_name.split(' ')))}")
+                    shutil.copy(f"{dir_path_content}/{directory}", f"{dir_path_content}/{directory.replace('ExampleMod', ''.join(self.mod_name.split(' ')))}")
+                    os.remove(f"{dir_path_content}/{directory}")
+            else:
+                if directory == "com" and os.path.exists(f"{dir_path_content}/{directory}/example"):
+                    new_directory = f"{dir_path_content}/{self.package.replace('.', '/')}"
+                    if new_directory == f"{dir_path_content}/{directory}/example":
+                        continue
+                    print(f"Changing {dir_path_content}/{directory}/example to {new_directory}")
+                    shutil.copytree(f"{dir_path_content}/{directory}/example", new_directory, dirs_exist_ok=True)
+                    shutil.rmtree(f"{dir_path_content}/{directory}")
+        
+        directories = os.listdir(dir_path_content)
+        for directory in directories:
+            path = f"{dir_path_content}/{directory}"
+            if os.path.isfile(path):
+                self.change_content_in_file(path)
+            else:
+                self.change_directory_and_file_names_recursive(path)
+    
+    def change_content_in_file(self, path):
+        pass
