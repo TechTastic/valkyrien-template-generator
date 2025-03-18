@@ -2,6 +2,7 @@ from enum import Enum
 import os
 import shutil
 from jproperties import Properties
+import zipfile
 
 class MinecraftVersion(Enum):
     v1211 = "1.21.1"
@@ -45,8 +46,9 @@ class Generator:
 
         self._clear_old_cache()
         path = self._does_template_exist()
-        Generator.copy_over_template(path, "output")
-        self.change_directory_and_file_names_recursive("output")
+        Generator.copy_over_template(path, "temp")
+        self.change_directory_and_file_names_recursive("temp")
+        self.zip_output()
         
     def _validate_mod_id(self):
         print("Validating Mod ID...")
@@ -69,6 +71,8 @@ class Generator:
         print("Deleting old cache...")
         if os.path.exists(self.output_loc):
             shutil.rmtree(self.output_loc)
+        if os.path.exists("temp"):
+            shutil.rmtree("temp")
     
     def _does_template_exist(self):
         print("Checking for correct template...")
@@ -85,7 +89,7 @@ class Generator:
     
     def copy_over_template(source, destination):
         files = os.listdir(source)
-        print(f"Creating new {destination} directory...")
+        print(f"\tCreating new {destination} directory...")
         os.mkdir(destination)
         for file in files:
             if os.path.isfile(f"{source}/{file}"):
@@ -99,11 +103,11 @@ class Generator:
         for directory in directories:
             if os.path.isfile(f"{dir_path_content}/{directory}"):
                 if directory.startswith("example_mod") and directory != directory.replace('example_mod', self.mod_id):
-                    print(f"Changing {dir_path_content}/{directory} to {dir_path_content}/{directory.replace('example_mod', self.mod_id)}")
+                    print(f"\tChanging {dir_path_content}/{directory} to {dir_path_content}/{directory.replace('example_mod', self.mod_id)}")
                     shutil.copy(f"{dir_path_content}/{directory}", f"{dir_path_content}/{directory.replace('example_mod', self.mod_id)}")
                     os.remove(f"{dir_path_content}/{directory}")
                 elif directory.startswith("ExampleMod") and directory != directory.replace('ExampleMod', ''.join(self.mod_name.split(' '))):
-                    print(f"Changing {dir_path_content}/{directory} to {dir_path_content}/{directory.replace('ExampleMod', ''.join(self.mod_name.split(' ')))}")
+                    print(f"\tChanging {dir_path_content}/{directory} to {dir_path_content}/{directory.replace('ExampleMod', ''.join(self.mod_name.split(' ')))}")
                     shutil.copy(f"{dir_path_content}/{directory}", f"{dir_path_content}/{directory.replace('ExampleMod', ''.join(self.mod_name.split(' ')))}")
                     os.remove(f"{dir_path_content}/{directory}")
             else:
@@ -111,7 +115,7 @@ class Generator:
                     new_directory = f"{dir_path_content}/{self.package.replace('.', '/')}"
                     if new_directory == f"{dir_path_content}/{directory}/example":
                         continue
-                    print(f"Changing {dir_path_content}/{directory}/example to {new_directory}")
+                    print(f"\tChanging {dir_path_content}/{directory}/example to {new_directory}")
                     shutil.copytree(f"{dir_path_content}/{directory}/example", new_directory, dirs_exist_ok=True)
                     shutil.rmtree(f"{dir_path_content}/{directory}")
         
@@ -124,7 +128,7 @@ class Generator:
                 self.change_directory_and_file_names_recursive(path)
     
     def change_content_in_file(self, path):
-        print(f"Adding Content to {path}...")
+        print(f"\t\tAdding Content to {path}...")
 
         if path.endswith(".properties"):
             self.change_content_in_gradle_properties(path)
@@ -133,24 +137,26 @@ class Generator:
         if path.endswith(".jar"):
             return
         
-        content = ""
+        content = None
         with open(path, 'r') as f:
             content = f.read()
             f.close()
-        
-        content = content.replace("com.example", self.package)
-        content = content.replace("ExampleMod", "".join(self.mod_name.split(" ")))
-        content = content.replace("example_mod", self.mod_id)
-        content = content.replace(r"{{ Mod ID }}", self.mod_id)
-        content = content.replace(r"{{ Mod Name }}", self.mod_name)
-        content = content.replace(r"{{ MC Version }}", self.mc_version.value)
-        content = content.replace(r"{{ Arch API Version }}", self.get_arch_api_version())
-        content = content.replace(r"{{ Fabric Loader Version }}", self.get_fabric_loader_version())
-        content = content.replace(r"{{ Fabric API Version }}", self.get_fabric_api_version())
-        content = content.replace(r"{{ Forge Version }}", self.get_forge_version())
-        if self.mc_version != MinecraftVersion.v1211:
-            content = content.replace(r"{{ Forge Version Short }}", self.get_forge_version().split("-")[1].split(".")[0])
-        content = content.replace(r"{{ NeoForge Version Short }}", "4")
+
+        if content is not None:
+            content = content.replace("com.example", self.package)
+            content = content.replace("ExampleMod", "".join(self.mod_name.split(" ")))
+            content = content.replace("example_mod", self.mod_id)
+            content = content.replace(r"{{ Mod ID }}", self.mod_id)
+            content = content.replace(r"{{ Mod Name }}", self.mod_name)
+            content = content.replace(r"{{ MC Version }}", self.mc_version.value)
+            content = content.replace(r"{{ Arch API Version }}", self.get_arch_api_version())
+            content = content.replace(r"{{ Fabric Loader Version }}", self.get_fabric_loader_version())
+            content = content.replace(r"{{ Fabric API Version }}", self.get_fabric_api_version())
+            content = content.replace(r"{{ Forge Version }}", self.get_forge_version())
+            if self.mc_version != MinecraftVersion.v1211:
+                content = content.replace(r"{{ Forge Version Short }}", self.get_forge_version().split("-")[1].split(".")[0])
+            else:
+                content = content.replace(r"{{ NeoForge Version Short }}", "4")
         
         with open(path, 'w') as f:
             f.write(content)
@@ -183,6 +189,24 @@ class Generator:
         with open(path, 'wb') as f:
             configs.store(f)
             f.close()
+    
+    def zip_output(self):
+        print("Creating output/template.zip...")
+        if not os.path.exists("output"):
+            os.mkdir("output")
+
+        with zipfile.ZipFile('output/template.zip', 'w') as myzip:
+            self.zip_output_recursive("temp", myzip)
+        shutil.rmtree("temp")
+    
+    def zip_output_recursive(self, dir_path, zip):
+        directories = os.listdir(dir_path)
+        for directory in directories:
+            path = f"{dir_path}/{directory}"
+            if os.path.isfile(path):
+                zip.write(path, path[4:])
+            else:
+                self.zip_output_recursive(path, zip)
     
     def get_arch_api_version(self):
         match self.mc_version:
